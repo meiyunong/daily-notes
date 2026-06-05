@@ -1,0 +1,1400 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>每日便签</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Helvetica Neue', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 480px;
+            background: #f5f5f0;
+            border-radius: 24px;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            min-height: 100vh;
+        }
+
+        /* 顶部头部 */
+        .header {
+            background: linear-gradient(135deg, #2c2c54, #3d3d6b);
+            color: white;
+            padding: 20px 24px 16px;
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+
+        .date-block .date-main {
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+
+        .date-block .date-sub {
+            font-size: 13px;
+            opacity: 0.7;
+            margin-top: 2px;
+        }
+
+        .header-right {
+            text-align: right;
+        }
+
+        .greeting {
+            font-size: 13px;
+            opacity: 0.8;
+        }
+
+        .weather-badge {
+            background: rgba(255,255,255,0.15);
+            border-radius: 20px;
+            padding: 4px 12px;
+            font-size: 12px;
+            margin-top: 4px;
+            display: inline-block;
+        }
+
+        /* 今日总览 */
+        .overview-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            padding: 16px 24px;
+            background: linear-gradient(135deg, #2c2c54, #3d3d6b);
+        }
+
+        .overview-item {
+            background: rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 10px 8px;
+            text-align: center;
+            color: white;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .overview-item:hover {
+            background: rgba(255,255,255,0.2);
+            transform: translateY(-2px);
+        }
+
+        .overview-item .ov-icon {
+            font-size: 18px;
+            margin-bottom: 4px;
+        }
+
+        .overview-item .ov-value {
+            font-size: 15px;
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        .overview-item .ov-label {
+            font-size: 10px;
+            opacity: 0.7;
+            margin-top: 2px;
+        }
+
+        /* 主内容区 */
+        .main-content {
+            padding: 16px;
+        }
+
+        /* 卡片通用样式 */
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .card-title {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 15px;
+            font-weight: 600;
+            color: #1a1a2e;
+        }
+
+        .card-title .icon {
+            font-size: 18px;
+        }
+
+        .edit-btn {
+            background: none;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 4px 10px;
+            font-size: 12px;
+            color: #888;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .edit-btn:hover {
+            border-color: #667eea;
+            color: #667eea;
+        }
+
+        /* 阅读写作卡片 */
+        .reading-writing {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 0;
+        }
+
+        .rw-item {
+            background: #f8f8ff;
+            border-radius: 12px;
+            padding: 12px;
+        }
+
+        .rw-label {
+            font-size: 11px;
+            color: #888;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .rw-value {
+            font-size: 20px;
+            font-weight: 700;
+            color: #3d3d6b;
+        }
+
+        .rw-unit {
+            font-size: 11px;
+            color: #aaa;
+            font-weight: 400;
+        }
+
+        .rw-sub {
+            font-size: 11px;
+            color: #aaa;
+            margin-top: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .progress-bar {
+            height: 4px;
+            background: #e8e8f0;
+            border-radius: 2px;
+            margin-top: 6px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            border-radius: 2px;
+            transition: width 0.5s ease;
+        }
+
+        /* 输入框 */
+        .input-field {
+            width: 100%;
+            border: 1.5px solid #e8e8f0;
+            border-radius: 10px;
+            padding: 8px 12px;
+            font-size: 14px;
+            color: #333;
+            outline: none;
+            transition: border-color 0.2s;
+            font-family: inherit;
+        }
+
+        .input-field:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102,126,234,0.1);
+        }
+
+        .input-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 8px;
+            align-items: center;
+        }
+
+        .input-row label {
+            font-size: 13px;
+            color: #666;
+            min-width: 50px;
+        }
+
+        /* 运动卡片 */
+        .sport-stats {
+            display: flex;
+            gap: 10px;
+        }
+
+        .sport-stat {
+            flex: 1;
+            background: #f0f4ff;
+            border-radius: 10px;
+            padding: 10px;
+            text-align: center;
+        }
+
+        .sport-stat .s-val {
+            font-size: 18px;
+            font-weight: 700;
+            color: #3d3d6b;
+        }
+
+        .sport-stat .s-lbl {
+            font-size: 10px;
+            color: #888;
+            margin-top: 2px;
+        }
+
+        .sport-note {
+            margin-top: 10px;
+            font-size: 12px;
+            color: #666;
+            background: #f8f8ff;
+            border-radius: 8px;
+            padding: 8px 10px;
+            border-left: 3px solid #667eea;
+            font-style: italic;
+        }
+
+        /* 睡眠卡片 */
+        .sleep-visual {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 10px;
+        }
+
+        .sleep-circle {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            background: conic-gradient(#667eea calc(var(--pct) * 1%), #e8e8f0 0);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .sleep-circle::after {
+            content: '';
+            position: absolute;
+            width: 46px;
+            height: 46px;
+            background: white;
+            border-radius: 50%;
+        }
+
+        .sleep-circle .sleep-val {
+            position: relative;
+            z-index: 1;
+            font-size: 14px;
+            font-weight: 700;
+            color: #3d3d6b;
+        }
+
+        .sleep-info {
+            flex: 1;
+        }
+
+        .sleep-info .time-range {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1a1a2e;
+        }
+
+        .sleep-info .time-label {
+            font-size: 11px;
+            color: #aaa;
+            margin-top: 2px;
+        }
+
+        .sleep-quality {
+            display: flex;
+            gap: 8px;
+        }
+
+        .quality-tag {
+            background: #f0f4ff;
+            color: #667eea;
+            border-radius: 20px;
+            padding: 3px 10px;
+            font-size: 11px;
+            font-weight: 500;
+        }
+
+        /* 体重饮食 */
+        .weight-diet-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .weight-block, .diet-block {
+            background: #f8f8ff;
+            border-radius: 12px;
+            padding: 12px;
+        }
+
+        .wd-label {
+            font-size: 11px;
+            color: #888;
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .wd-value {
+            font-size: 22px;
+            font-weight: 700;
+            color: #3d3d6b;
+        }
+
+        .wd-unit {
+            font-size: 12px;
+            color: #aaa;
+            font-weight: 400;
+        }
+
+        .wd-change {
+            font-size: 11px;
+            margin-top: 4px;
+        }
+
+        .wd-change.up { color: #e57373; }
+        .wd-change.down { color: #66bb6a; }
+        .wd-change.same { color: #aaa; }
+
+        /* 习惯打卡 */
+        .habit-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .habit-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 10px;
+            background: #f8f8ff;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .habit-item:hover {
+            background: #f0f4ff;
+        }
+
+        .habit-item.done {
+            background: #f0fff4;
+        }
+
+        .habit-check {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            border: 2px solid #ddd;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: all 0.2s;
+            font-size: 12px;
+        }
+
+        .habit-item.done .habit-check {
+            background: #66bb6a;
+            border-color: #66bb6a;
+            color: white;
+        }
+
+        .habit-name {
+            flex: 1;
+            font-size: 13px;
+            color: #444;
+        }
+
+        .habit-item.done .habit-name {
+            color: #888;
+            text-decoration: line-through;
+        }
+
+        .habit-streak {
+            font-size: 11px;
+            color: #f9a825;
+        }
+
+        /* 诗签区 */
+        .poem-section {
+            margin: 0 16px 16px;
+        }
+
+        .poem-card {
+            background: linear-gradient(135deg, #2c2c54, #3d3d6b);
+            border-radius: 16px;
+            padding: 20px;
+            text-align: center;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .poem-card::before {
+            content: '❝';
+            position: absolute;
+            top: 10px;
+            left: 16px;
+            font-size: 40px;
+            opacity: 0.15;
+        }
+
+        .poem-tabs {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .poem-tab {
+            padding: 4px 14px;
+            border-radius: 20px;
+            border: none;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: rgba(255,255,255,0.1);
+            color: rgba(255,255,255,0.6);
+        }
+
+        .poem-tab.active {
+            background: rgba(255,255,255,0.25);
+            color: white;
+            font-weight: 600;
+        }
+
+        .poem-text {
+            font-size: 18px;
+            font-weight: 500;
+            letter-spacing: 3px;
+            line-height: 1.8;
+            margin-bottom: 10px;
+        }
+
+        .poem-sub {
+            font-size: 12px;
+            opacity: 0.6;
+            line-height: 1.6;
+        }
+
+        .poem-source {
+            font-size: 11px;
+            opacity: 0.5;
+            margin-top: 8px;
+        }
+
+        .poem-nav {
+            display: flex;
+            justify-content: center;
+            gap: 6px;
+            margin-top: 14px;
+        }
+
+        .poem-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.3);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .poem-dot.active {
+            background: white;
+            width: 18px;
+            border-radius: 3px;
+        }
+
+        /* 编辑模态框 */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 100;
+            justify-content: center;
+            align-items: flex-end;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: white;
+            width: 100%;
+            max-width: 480px;
+            border-radius: 24px 24px 0 0;
+            padding: 20px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #1a1a2e;
+            margin-bottom: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-close {
+            background: #f5f5f5;
+            border: none;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            font-size: 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .save-btn {
+            width: 100%;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 14px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 16px;
+            transition: opacity 0.2s;
+        }
+
+        .save-btn:hover {
+            opacity: 0.9;
+        }
+
+        .form-group {
+            margin-bottom: 14px;
+        }
+
+        .form-label {
+            font-size: 13px;
+            color: #666;
+            margin-bottom: 6px;
+            display: block;
+        }
+
+        textarea.input-field {
+            resize: vertical;
+            min-height: 60px;
+        }
+
+        /* Toast提示 */
+        .toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-60px);
+            background: #1a1a2e;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 13px;
+            z-index: 200;
+            transition: transform 0.3s ease;
+        }
+
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* 底部间距 */
+        .bottom-space {
+            height: 20px;
+        }
+
+        /* 动画 */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .card {
+            animation: fadeIn 0.4s ease backwards;
+        }
+
+        .card:nth-child(1) { animation-delay: 0.05s; }
+        .card:nth-child(2) { animation-delay: 0.1s; }
+        .card:nth-child(3) { animation-delay: 0.15s; }
+        .card:nth-child(4) { animation-delay: 0.2s; }
+        .card:nth-child(5) { animation-delay: 0.25s; }
+
+        .section-divider {
+            font-size: 12px;
+            color: #aaa;
+            padding: 4px 4px 8px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <!-- 头部 -->
+    <div class="header">
+        <div class="header-top">
+            <div class="date-block">
+                <div class="date-main" id="dateMain">2026.06.03</div>
+                <div class="date-sub" id="dateSub">星期三 · 今日总览</div>
+            </div>
+            <div class="header-right">
+                <div class="greeting" id="greeting">晚上好 🌙</div>
+                <div class="weather-badge">☀️ 记录每一天</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 今日总览 -->
+    <div class="overview-grid">
+        <div class="overview-item" onclick="openModal('reading')">
+            <div class="ov-icon">📖</div>
+            <div class="ov-value" id="ov-reading">0</div>
+            <div class="ov-label">今日阅读(字)</div>
+        </div>
+        <div class="overview-item" onclick="openModal('writing')">
+            <div class="ov-icon">✍️</div>
+            <div class="ov-value" id="ov-writing">0</div>
+            <div class="ov-label">今日写作(字)</div>
+        </div>
+        <div class="overview-item" onclick="openModal('sport')">
+            <div class="ov-icon">🏃</div>
+            <div class="ov-value" id="ov-sport">--</div>
+            <div class="ov-label">今日运动</div>
+        </div>
+        <div class="overview-item" onclick="openModal('sleep')">
+            <div class="ov-icon">🌙</div>
+            <div class="ov-value" id="ov-sleep">--h</div>
+            <div class="ov-label">昨晚睡眠</div>
+        </div>
+        <div class="overview-item" onclick="openModal('weight')">
+            <div class="ov-icon">⚖️</div>
+            <div class="ov-value" id="ov-weight">--</div>
+            <div class="ov-label">今日体重(kg)</div>
+        </div>
+        <div class="overview-item" onclick="scrollToHabits()">
+            <div class="ov-icon">✅</div>
+            <div class="ov-value" id="ov-habit">0/6</div>
+            <div class="ov-label">习惯打卡</div>
+        </div>
+    </div>
+
+    <div class="main-content">
+
+        <!-- 阅读 & 写作 -->
+        <div class="section-divider">📚 阅读 & 写作</div>
+        <div class="card">
+            <div class="reading-writing">
+                <div class="rw-item">
+                    <div class="rw-label">📖 今日阅读</div>
+                    <div class="rw-value">
+                        <span id="reading-val">0</span>
+                        <span class="rw-unit"> 字</span>
+                    </div>
+                    <div class="rw-sub" id="reading-book">暂无书目</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="reading-prog" style="width:0%"></div>
+                    </div>
+                    <div style="font-size:10px;color:#aaa;margin-top:3px" id="reading-pct">进度 0%</div>
+                </div>
+                <div class="rw-item">
+                    <div class="rw-label">✍️ 今日写作</div>
+                    <div class="rw-value">
+                        <span id="writing-val">0</span>
+                        <span class="rw-unit"> 字</span>
+                    </div>
+                    <div class="rw-sub" id="writing-project">暂无项目</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="writing-prog" style="width:0%"></div>
+                    </div>
+                    <div style="font-size:10px;color:#aaa;margin-top:3px" id="writing-goal">目标 0 字</div>
+                </div>
+            </div>
+            <div style="margin-top:10px;text-align:right">
+                <button class="edit-btn" onclick="openModal('reading')">记录阅读</button>
+                &nbsp;
+                <button class="edit-btn" onclick="openModal('writing')">记录写作</button>
+            </div>
+        </div>
+
+        <!-- 运动 -->
+        <div class="section-divider">🏃 运动</div>
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title"><span class="icon">🏃</span>今日运动</div>
+                <button class="edit-btn" onclick="openModal('sport')">记录</button>
+            </div>
+            <div class="sport-stats">
+                <div class="sport-stat">
+                    <div class="s-val" id="sport-duration">--</div>
+                    <div class="s-lbl">运动时长</div>
+                </div>
+                <div class="sport-stat">
+                    <div class="s-val" id="sport-kcal">--</div>
+                    <div class="s-lbl">消耗 kcal</div>
+                </div>
+                <div class="sport-stat">
+                    <div class="s-val" id="sport-type">--</div>
+                    <div class="s-lbl">运动类型</div>
+                </div>
+            </div>
+            <div class="sport-note" id="sport-note" style="display:none"></div>
+        </div>
+
+        <!-- 睡眠 -->
+        <div class="section-divider">🌙 睡眠</div>
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title"><span class="icon">🌙</span>昨晚睡眠</div>
+                <button class="edit-btn" onclick="openModal('sleep')">记录</button>
+            </div>
+            <div class="sleep-visual">
+                <div class="sleep-circle" style="--pct:0" id="sleep-circle">
+                    <span class="sleep-val" id="sleep-val">--h</span>
+                </div>
+                <div class="sleep-info">
+                    <div class="time-range" id="sleep-range">未记录</div>
+                    <div class="time-label">入睡 → 起床</div>
+                    <div class="sleep-quality" style="margin-top:8px">
+                        <span class="quality-tag" id="sleep-quality-tag">🌟 待记录</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 体重 & 饮食 -->
+        <div class="section-divider">⚖️ 体重 & 饮食</div>
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title"><span class="icon">📊</span>体重 & 饮食</div>
+                <button class="edit-btn" onclick="openModal('weight')">记录</button>
+            </div>
+            <div class="weight-diet-grid">
+                <div class="weight-block">
+                    <div class="wd-label">⚖️ 今日体重</div>
+                    <div class="wd-value">
+                        <span id="weight-val">--</span>
+                        <span class="wd-unit"> kg</span>
+                    </div>
+                    <div class="wd-change same" id="weight-change">较昨日 --</div>
+                </div>
+                <div class="diet-block">
+                    <div class="wd-label">🥗 饮食情况</div>
+                    <div class="wd-value">
+                        <span id="diet-meals">--</span>
+                        <span class="wd-unit"> 餐</span>
+                    </div>
+                    <div style="font-size:11px;color:#aaa;margin-top:4px" id="diet-note">暂无记录</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 习惯打卡 -->
+        <div class="section-divider" id="habits-section">✅ 习惯打卡</div>
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title"><span class="icon">✅</span>今日习惯</div>
+                <button class="edit-btn" onclick="openModal('habit-edit')">编辑</button>
+            </div>
+            <div class="habit-list" id="habit-list"></div>
+        </div>
+
+    </div>
+
+    <!-- 诗签/名言区 -->
+    <div class="poem-section">
+        <div class="poem-card">
+            <div class="poem-tabs">
+                <button class="poem-tab active" onclick="switchPoem(0)">诗词</button>
+                <button class="poem-tab" onclick="switchPoem(1)">名言</button>
+                <button class="poem-tab" onclick="switchPoem(2)">电影台词</button>
+            </div>
+            <div class="poem-text" id="poem-text">朝辞白帝彩云间</div>
+            <div class="poem-sub" id="poem-sub">千里江陵一日还</div>
+            <div class="poem-source" id="poem-source">——李白《早发白帝城》</div>
+            <div class="poem-nav" id="poem-nav"></div>
+        </div>
+    </div>
+
+    <div class="bottom-space"></div>
+</div>
+
+<!-- 阅读模态框 -->
+<div class="modal-overlay" id="modal-reading">
+    <div class="modal">
+        <div class="modal-title">📖 记录阅读
+            <button class="modal-close" onclick="closeModal('reading')">✕</button>
+        </div>
+        <div class="form-group">
+            <label class="form-label">今日阅读字数</label>
+            <input class="input-field" type="number" id="input-reading-val" placeholder="如：5000">
+        </div>
+        <div class="form-group">
+            <label class="form-label">书名</label>
+            <input class="input-field" type="text" id="input-reading-book" placeholder="正在阅读的书名">
+        </div>
+        <div class="form-group">
+            <label class="form-label">阅读进度 (%)</label>
+            <input class="input-field" type="number" id="input-reading-pct" placeholder="如：81" min="0" max="100">
+        </div>
+        <button class="save-btn" onclick="saveReading()">保存记录</button>
+    </div>
+</div>
+
+<!-- 写作模态框 -->
+<div class="modal-overlay" id="modal-writing">
+    <div class="modal">
+        <div class="modal-title">✍️ 记录写作
+            <button class="modal-close" onclick="closeModal('writing')">✕</button>
+        </div>
+        <div class="form-group">
+            <label class="form-label">今日写作字数</label>
+            <input class="input-field" type="number" id="input-writing-val" placeholder="如：1000">
+        </div>
+        <div class="form-group">
+            <label class="form-label">写作项目</label>
+            <input class="input-field" type="text" id="input-writing-project" placeholder="如：第一本小说">
+        </div>
+        <div class="form-group">
+            <label class="form-label">每日目标字数</label>
+            <input class="input-field" type="number" id="input-writing-goal" placeholder="如：500">
+        </div>
+        <button class="save-btn" onclick="saveWriting()">保存记录</button>
+    </div>
+</div>
+
+<!-- 运动模态框 -->
+<div class="modal-overlay" id="modal-sport">
+    <div class="modal">
+        <div class="modal-title">🏃 记录运动
+            <button class="modal-close" onclick="closeModal('sport')">✕</button>
+        </div>
+        <div class="form-group">
+            <label class="form-label">运动类型</label>
+            <input class="input-field" type="text" id="input-sport-type" placeholder="如：羽毛球、跑步、游泳">
+        </div>
+        <div class="form-group">
+            <label class="form-label">运动时长</label>
+            <input class="input-field" type="text" id="input-sport-duration" placeholder="如：3h 16min">
+        </div>
+        <div class="form-group">
+            <label class="form-label">消耗卡路里 (kcal)</label>
+            <input class="input-field" type="number" id="input-sport-kcal" placeholder="如：1200">
+        </div>
+        <div class="form-group">
+            <label class="form-label">运动感受（可选）</label>
+            <textarea class="input-field" id="input-sport-note" placeholder="记录今天的运动状态..."></textarea>
+        </div>
+        <button class="save-btn" onclick="saveSport()">保存记录</button>
+    </div>
+</div>
+
+<!-- 睡眠模态框 -->
+<div class="modal-overlay" id="modal-sleep">
+    <div class="modal">
+        <div class="modal-title">🌙 记录睡眠
+            <button class="modal-close" onclick="closeModal('sleep')">✕</button>
+        </div>
+        <div class="form-group">
+            <label class="form-label">入睡时间</label>
+            <input class="input-field" type="time" id="input-sleep-start" value="22:30">
+        </div>
+        <div class="form-group">
+            <label class="form-label">起床时间</label>
+            <input class="input-field" type="time" id="input-sleep-end" value="07:00">
+        </div>
+        <div class="form-group">
+            <label class="form-label">睡眠质量</label>
+            <select class="input-field" id="input-sleep-quality">
+                <option value="深度睡眠 💤">深度睡眠 💤</option>
+                <option value="睡眠良好 😴">睡眠良好 😴</option>
+                <option value="睡眠一般 😐">睡眠一般 😐</option>
+                <option value="睡眠较差 😞">睡眠较差 😞</option>
+            </select>
+        </div>
+        <button class="save-btn" onclick="saveSleep()">保存记录</button>
+    </div>
+</div>
+
+<!-- 体重饮食模态框 -->
+<div class="modal-overlay" id="modal-weight">
+    <div class="modal">
+        <div class="modal-title">⚖️ 记录体重 & 饮食
+            <button class="modal-close" onclick="closeModal('weight')">✕</button>
+        </div>
+        <div class="form-group">
+            <label class="form-label">今日体重 (kg)</label>
+            <input class="input-field" type="number" id="input-weight-val" placeholder="如：71.5" step="0.1">
+        </div>
+        <div class="form-group">
+            <label class="form-label">今日用餐次数</label>
+            <input class="input-field" type="number" id="input-diet-meals" placeholder="如：3">
+        </div>
+        <div class="form-group">
+            <label class="form-label">饮食备注</label>
+            <textarea class="input-field" id="input-diet-note" placeholder="今天吃了什么，有什么感受..."></textarea>
+        </div>
+        <button class="save-btn" onclick="saveWeight()">保存记录</button>
+    </div>
+</div>
+
+<!-- 习惯编辑模态框 -->
+<div class="modal-overlay" id="modal-habit-edit">
+    <div class="modal">
+        <div class="modal-title">🎯 编辑习惯列表
+            <button class="modal-close" onclick="closeModal('habit-edit')">✕</button>
+        </div>
+        <div id="habit-edit-list"></div>
+        <div style="display:flex;gap:8px;margin-top:12px">
+            <input class="input-field" type="text" id="new-habit-input" placeholder="添加新习惯...">
+            <button class="edit-btn" style="white-space:nowrap;padding:8px 14px" onclick="addHabit()">添加</button>
+        </div>
+        <button class="save-btn" onclick="closeModal('habit-edit')">完成</button>
+    </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast">已保存 ✓</div>
+
+<script>
+    // ====== 数据存储 ======
+    const TODAY = new Date().toDateString();
+    let data = JSON.parse(localStorage.getItem('daily_note_' + TODAY) || '{}');
+    let prevData = JSON.parse(localStorage.getItem('daily_note_' + new Date(Date.now() - 86400000).toDateString()) || '{}');
+
+    // 默认习惯列表
+    if (!data.habits) {
+        data.habits = [
+            { name: '早起 (07:30前)', done: false, streak: 0, icon: '🌅' },
+            { name: '阅读30分钟', done: false, streak: 0, icon: '📖' },
+            { name: '运动', done: false, streak: 0, icon: '🏃' },
+            { name: '写作打卡', done: false, streak: 0, icon: '✍️' },
+            { name: '睡前冥想', done: false, streak: 0, icon: '🧘' },
+            { name: '不熬夜', done: false, streak: 0, icon: '🌙' }
+        ];
+    }
+
+    // 诗签数据
+    const poemData = [
+        {
+            tab: 'poem',
+            items: [
+                { text: '朝辞白帝彩云间', sub: '千里江陵一日还', source: '——李白《早发白帝城》' },
+                { text: '会当凌绝顶', sub: '一览众山小', source: '——杜甫《望岳》' },
+                { text: '长风破浪会有时', sub: '直挂云帆济沧海', source: '——李白《行路难》' },
+                { text: '不畏浮云遮望眼', sub: '自缘身在最高层', source: '——王安石《登飞来峰》' },
+            ]
+        },
+        {
+            tab: 'quote',
+            items: [
+                { text: '成功不是终点，失败也不是终结', sub: '继续前行的勇气才是最重要的。', source: '——丘吉尔' },
+                { text: '你今天的努力', sub: '是明天幸运的伏笔', source: '——佚名' },
+                { text: '种一棵树最好的时间', sub: '是十年前，其次是现在', source: '——中国谚语' },
+            ]
+        },
+        {
+            tab: 'movie',
+            items: [
+                { text: '人生就像一盒巧克力', sub: '你永远不知道下一颗是什么味道', source: '——《阿甘正传》' },
+                { text: '活着，或者死去', sub: '这是个问题', source: '——《哈姆雷特》' },
+                { text: '有些鸟儿是关不住的', sub: '因为它的每一片羽毛都闪耀着自由的光辉', source: '——《肖申克的救赎》' },
+            ]
+        }
+    ];
+
+    let currentPoemTab = 0;
+    let currentPoemIndex = 0;
+
+    // ====== 初始化 ======
+    function init() {
+        updateDate();
+        updateGreeting();
+        renderOverview();
+        renderReadingWriting();
+        renderSport();
+        renderSleep();
+        renderWeight();
+        renderHabits();
+        renderPoem();
+        setInterval(updateDate, 60000);
+    }
+
+    function updateDate() {
+        const now = new Date();
+        const y = now.getFullYear();
+        const m = String(now.getMonth() + 1).padStart(2, '0');
+        const d = String(now.getDate()).padStart(2, '0');
+        const days = ['星期日','星期一','星期二','星期三','星期四','星期五','星期六'];
+        document.getElementById('dateMain').textContent = `${y}.${m}.${d}`;
+        document.getElementById('dateSub').textContent = `${days[now.getDay()]} · 今日总览`;
+    }
+
+    function updateGreeting() {
+        const h = new Date().getHours();
+        const greetings = [
+            [5, '凌晨好，夜猫子 🦉'], [9, '早上好，元气满满 ☀️'],
+            [12, '上午好，加油 💪'], [14, '中午好，记得吃饭 🍜'],
+            [18, '下午好，继续冲 🚀'], [21, '傍晚好，放松一下 🌆'],
+            [24, '晚上好，今日收尾 🌙']
+        ];
+        for (const [hour, text] of greetings) {
+            if (h < hour) { document.getElementById('greeting').textContent = text; break; }
+        }
+    }
+
+    // ====== 渲染函数 ======
+    function renderOverview() {
+        document.getElementById('ov-reading').textContent = data.reading?.val ? formatNum(data.reading.val) : '0';
+        document.getElementById('ov-writing').textContent = data.writing?.val ? formatNum(data.writing.val) : '0';
+        document.getElementById('ov-sport').textContent = data.sport?.duration || '--';
+        document.getElementById('ov-sleep').textContent = data.sleep?.hours ? data.sleep.hours + 'h' : '--h';
+        document.getElementById('ov-weight').textContent = data.weight?.val || '--';
+        const done = data.habits ? data.habits.filter(h => h.done).length : 0;
+        const total = data.habits ? data.habits.length : 6;
+        document.getElementById('ov-habit').textContent = `${done}/${total}`;
+    }
+
+    function renderReadingWriting() {
+        if (data.reading) {
+            document.getElementById('reading-val').textContent = formatNum(data.reading.val);
+            document.getElementById('reading-book').textContent = data.reading.book || '暂无书目';
+            const pct = data.reading.pct || 0;
+            document.getElementById('reading-prog').style.width = pct + '%';
+            document.getElementById('reading-pct').textContent = `进度 ${pct}%`;
+            document.getElementById('ov-reading').textContent = formatNum(data.reading.val);
+        }
+        if (data.writing) {
+            document.getElementById('writing-val').textContent = formatNum(data.writing.val);
+            document.getElementById('writing-project').textContent = data.writing.project || '暂无项目';
+            const goal = data.writing.goal || 0;
+            const pct = goal > 0 ? Math.min(100, Math.round(data.writing.val / goal * 100)) : 0;
+            document.getElementById('writing-prog').style.width = pct + '%';
+            document.getElementById('writing-goal').textContent = `目标 ${goal} 字 (${pct}%)`;
+        }
+    }
+
+    function renderSport() {
+        if (data.sport) {
+            document.getElementById('sport-duration').textContent = data.sport.duration || '--';
+            document.getElementById('sport-kcal').textContent = data.sport.kcal ? data.sport.kcal + '' : '--';
+            document.getElementById('sport-type').textContent = data.sport.type || '--';
+            if (data.sport.note) {
+                document.getElementById('sport-note').style.display = 'block';
+                document.getElementById('sport-note').textContent = '"' + data.sport.note + '"';
+            }
+            document.getElementById('ov-sport').textContent = data.sport.duration || '--';
+        }
+    }
+
+    function renderSleep() {
+        if (data.sleep) {
+            const h = data.sleep.hours;
+            document.getElementById('sleep-val').textContent = h + 'h';
+            document.getElementById('sleep-range').textContent = `${data.sleep.start} - ${data.sleep.end}`;
+            document.getElementById('sleep-quality-tag').textContent = data.sleep.quality || '睡眠良好';
+            const pct = Math.min(100, Math.round(h / 10 * 100));
+            document.getElementById('sleep-circle').style.setProperty('--pct', pct);
+            document.getElementById('ov-sleep').textContent = h + 'h';
+        }
+    }
+
+    function renderWeight() {
+        if (data.weight) {
+            document.getElementById('weight-val').textContent = data.weight.val;
+            const prev = prevData.weight?.val;
+            if (prev) {
+                const diff = (data.weight.val - prev).toFixed(1);
+                const el = document.getElementById('weight-change');
+                if (diff > 0) { el.textContent = `▲ +${diff} kg`; el.className = 'wd-change up'; }
+                else if (diff < 0) { el.textContent = `▼ ${diff} kg`; el.className = 'wd-change down'; }
+                else { el.textContent = '→ 持平'; el.className = 'wd-change same'; }
+            }
+        }
+        if (data.diet) {
+            document.getElementById('diet-meals').textContent = data.diet.meals || '--';
+            document.getElementById('diet-note').textContent = data.diet.note || '暂无记录';
+        }
+    }
+
+    function renderHabits() {
+        const list = document.getElementById('habit-list');
+        list.innerHTML = '';
+        (data.habits || []).forEach((h, i) => {
+            const div = document.createElement('div');
+            div.className = 'habit-item' + (h.done ? ' done' : '');
+            div.innerHTML = `
+                <div class="habit-check">${h.done ? '✓' : ''}</div>
+                <div class="habit-name">${h.icon || '•'} ${h.name}</div>
+                <div class="habit-streak">${h.streak > 0 ? '🔥' + h.streak : ''}</div>
+            `;
+            div.onclick = () => toggleHabit(i);
+            list.appendChild(div);
+        });
+        const done = data.habits.filter(h => h.done).length;
+        document.getElementById('ov-habit').textContent = `${done}/${data.habits.length}`;
+    }
+
+    function renderPoem() {
+        const group = poemData[currentPoemTab];
+        const item = group.items[currentPoemIndex];
+        document.getElementById('poem-text').textContent = item.text;
+        document.getElementById('poem-sub').textContent = item.sub;
+        document.getElementById('poem-source').textContent = item.source;
+
+        // 导航点
+        const nav = document.getElementById('poem-nav');
+        nav.innerHTML = '';
+        group.items.forEach((_, i) => {
+            const dot = document.createElement('div');
+            dot.className = 'poem-dot' + (i === currentPoemIndex ? ' active' : '');
+            dot.onclick = () => { currentPoemIndex = i; renderPoem(); };
+            nav.appendChild(dot);
+        });
+
+        // 标签
+        document.querySelectorAll('.poem-tab').forEach((t, i) => {
+            t.className = 'poem-tab' + (i === currentPoemTab ? ' active' : '');
+        });
+    }
+
+    function switchPoem(tab) {
+        currentPoemTab = tab;
+        currentPoemIndex = 0;
+        renderPoem();
+    }
+
+    // ====== 交互函数 ======
+    function toggleHabit(i) {
+        data.habits[i].done = !data.habits[i].done;
+        if (data.habits[i].done) data.habits[i].streak = (data.habits[i].streak || 0) + 1;
+        saveData();
+        renderHabits();
+    }
+
+    function scrollToHabits() {
+        document.getElementById('habits-section').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // ====== 模态框 ======
+    function openModal(type) {
+        // 填充当前值
+        if (type === 'reading' && data.reading) {
+            document.getElementById('input-reading-val').value = data.reading.val || '';
+            document.getElementById('input-reading-book').value = data.reading.book || '';
+            document.getElementById('input-reading-pct').value = data.reading.pct || '';
+        }
+        if (type === 'writing' && data.writing) {
+            document.getElementById('input-writing-val').value = data.writing.val || '';
+            document.getElementById('input-writing-project').value = data.writing.project || '';
+            document.getElementById('input-writing-goal').value = data.writing.goal || '';
+        }
+        if (type === 'sport' && data.sport) {
+            document.getElementById('input-sport-type').value = data.sport.type || '';
+            document.getElementById('input-sport-duration').value = data.sport.duration || '';
+            document.getElementById('input-sport-kcal').value = data.sport.kcal || '';
+            document.getElementById('input-sport-note').value = data.sport.note || '';
+        }
+        if (type === 'sleep' && data.sleep) {
+            document.getElementById('input-sleep-start').value = data.sleep.start || '22:30';
+            document.getElementById('input-sleep-end').value = data.sleep.end || '07:00';
+        }
+        if (type === 'weight') {
+            if (data.weight) document.getElementById('input-weight-val').value = data.weight.val || '';
+            if (data.diet) {
+                document.getElementById('input-diet-meals').value = data.diet.meals || '';
+                document.getElementById('input-diet-note').value = data.diet.note || '';
+            }
+        }
+        if (type === 'habit-edit') renderHabitEditList();
+
+        document.getElementById('modal-' + type).classList.add('active');
+    }
+
+    function closeModal(type) {
+        document.getElementById('modal-' + type).classList.remove('active');
+    }
+
+    // 点击遮罩关闭
+    document.querySelectorAll('.modal-overlay').forEach(el => {
+        el.addEventListener('click', e => {
+            if (e.target === el) el.classList.remove('active');
+        });
+    });
+
+    // ====== 保存函数 ======
+    function saveReading() {
+        data.reading = {
+            val: parseInt(document.getElementById('input-reading-val').value) || 0,
+            book: document.getElementById('input-reading-book').value,
+            pct: parseInt(document.getElementById('input-reading-pct').value) || 0
+        };
+        saveData(); renderReadingWriting(); renderOverview();
+        closeModal('reading'); showToast('阅读记录已保存 📖');
+    }
+
+    function saveWriting() {
+        data.writing = {
+            val: parseInt(document.getElementById('input-writing-val').value) || 0,
+            project: document.getElementById('input-writing-project').value,
+            goal: parseInt(document.getElementById('input-writing-goal').value) || 0
+        };
+        saveData(); renderReadingWriting(); renderOverview();
+        closeModal('writing'); showToast('写作记录已保存 ✍️');
+    }
+
+    function saveSport() {
+        data.sport = {
+            type: document.getElementById('input-sport-type').value,
+            duration: document.getElementById('input-sport-duration').value,
+            kcal: document.getElementById('input-sport-kcal').value,
+            note: document.getElementById('input-sport-note').value
+        };
+        saveData(); renderSport(); renderOverview();
+        closeModal('sport'); showToast('运动记录已保存 🏃');
+    }
+
+    function saveSleep() {
+        const start = document.getElementById('input-sleep-start').value;
+        const end = document.getElementById('input-sleep-end').value;
+        const quality = document.getElementById('input-sleep-quality').value;
+        // 计算睡眠时长
+        const [sh, sm] = start.split(':').map(Number);
+        const [eh, em] = end.split(':').map(Number);
+        let mins = (eh * 60 + em) - (sh * 60 + sm);
+        if (mins < 0) mins += 24 * 60;
+        const hours = (mins / 60).toFixed(1);
+        data.sleep = { start, end, hours: parseFloat(hours), quality };
+        saveData(); renderSleep(); renderOverview();
+        closeModal('sleep'); showToast(`睡眠记录已保存 🌙 (${hours}h)`);
+    }
+
+    function saveWeight() {
+        data.weight = { val: parseFloat(document.getElementById('input-weight-val').value) || null };
+        data.diet = {
+            meals: parseInt(document.getElementById('input-diet-meals').value) || 0,
+            note: document.getElementById('input-diet-note').value
+        };
+        saveData(); renderWeight(); renderOverview();
+        closeModal('weight'); showToast('体重饮食已保存 ⚖️');
+    }
+
+    // ====== 习惯编辑 ======
+    function renderHabitEditList() {
+        const list = document.getElementById('habit-edit-list');
+        list.innerHTML = '';
+        data.habits.forEach((h, i) => {
+            const div = document.createElement('div');
+            div.style.cssText = 'display:flex;align-items:center;gap:8px;margin-bottom:8px';
+            div.innerHTML = `
+                <input class="input-field" style="flex:1;padding:8px 10px" value="${h.name}" 
+                    onchange="data.habits[${i}].name=this.value;saveData()">
+                <button onclick="removeHabit(${i})" style="background:#fee;border:none;border-radius:8px;
+                    padding:6px 10px;color:#e57373;cursor:pointer;font-size:14px">✕</button>
+            `;
+            list.appendChild(div);
+        });
+    }
+
+    function addHabit() {
+        const input = document.getElementById('new-habit-input');
+        const name = input.value.trim();
+        if (!name) return;
+        data.habits.push({ name, done: false, streak: 0, icon: '⭐' });
+        input.value = '';
+        saveData(); renderHabits(); renderHabitEditList();
+    }
+
+    function removeHabit(i) {
+        data.habits.splice(i, 1);
+        saveData(); renderHabits(); renderHabitEditList();
+    }
+
+    // ====== 工具函数 ======
+    function saveData() {
+        localStorage.setItem('daily_note_' + TODAY, JSON.stringify(data));
+    }
+
+    function showToast(msg) {
+        const t = document.getElementById('toast');
+        t.textContent = msg;
+        t.classList.add('show');
+        setTimeout(() => t.classList.remove('show'), 2500);
+    }
+
+    function formatNum(n) {
+        return n >= 10000 ? (n / 10000).toFixed(1) + 'w' : n >= 1000 ? (n / 1000).toFixed(1) + 'k' : n;
+    }
+
+    // 自动切换诗签
+    setInterval(() => {
+        const group = poemData[currentPoemTab];
+        currentPoemIndex = (currentPoemIndex + 1) % group.items.length;
+        renderPoem();
+    }, 8000);
+
+    init();
+</script>
+</body>
+</html>
